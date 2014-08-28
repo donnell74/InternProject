@@ -54,6 +54,17 @@ class TestBillingSchedules(unittest.TestCase):
         self.assertEquals(len(self.policy.invoices), 1)
         self.assertEquals(self.policy.invoices[0].amount_due, self.policy.annual_premium)
 
+    def test_quarterly_billing_schedule(self):
+        self.policy.billing_schedule = "Quarterly"
+        #No invoices currently exist
+        self.assertFalse(self.policy.invoices)
+        #Invoices should be made when the class is initiated
+        pa = PolicyAccounting(self.policy.id)
+        self.assertEquals(len(self.policy.invoices), 4)
+        # summation of all invoices should equal annual premium
+        self.assertEquals(sum((invoice.amount_due for invoice in self.policy.invoices)), 
+                          self.policy.annual_premium)
+
     def test_monthly_billing_schedule(self):
         self.policy.billing_schedule = "Monthly"
         #No invoices currently exist
