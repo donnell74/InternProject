@@ -64,11 +64,8 @@ class PolicyAccounting(object):
         if not date_cursor:
             date_cursor = datetime.now().date()
 
-        if not contact_id: 
-            try:
-                contact_id = self.policy.named_insured
-            except:
-                pass
+        if not contact_id and self.policy.named_insured: 
+            contact_id = self.policy.named_insured
 
         payment = Payment(self.policy.id,
                           contact_id,
