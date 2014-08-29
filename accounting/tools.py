@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 
 from accounting import db
 from models import Contact, Invoice, Payment, Policy
+from logger import Logger
 
 """
 #######################################################
@@ -14,6 +15,8 @@ If you have any questions, please contact Amanda at:
     amanda@britecore.com
 #######################################################
 """
+
+logger = Logger()
 
 class PolicyAccounting(object):
     """
@@ -112,6 +115,10 @@ class PolicyAccounting(object):
         """Produces next year's worth of invoices."""
         for invoice in self.policy.invoices:
             db.session.delete(invoice)
+        
+        logger.log("Info", 
+                   "New invoices are being made, invoices for this policy will be have a different invoice_id",
+                   self.policy.id);
 
         billing_schedules = {'Annual': None, 'Semi-Annual': 3, 'Quarterly': 4, 'Monthly': 12}
         billing_to_months = {'Annual': 12, 'Two-Pay': 6, 'Quarterly': 3, 'Monthly': 1}
@@ -129,6 +136,7 @@ class PolicyAccounting(object):
         if billing_to_months.has_key(self.policy.billing_schedule):
             months_in_billing_period = billing_to_months.get(self.policy.billing_schedule)
         else:
+            Logger.log("Info", "Client tried using %s billing schedule", self.policy.id)
             print "You have chosen a bad billing schedule."
 
         del billing_schedules["Annual"] # leave out annual from here to simplify
@@ -157,9 +165,11 @@ class PolicyAccounting(object):
 # shouldn't need to be edited.
 ################################
 def build_or_refresh_db():
+    logger.off()
     db.drop_all()
     db.create_all()
     insert_data()
+    logger.on()
     print "DB Ready!"
 
 def insert_data():
