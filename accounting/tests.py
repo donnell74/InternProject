@@ -6,7 +6,7 @@ from dateutil.relativedelta import relativedelta
 
 from accounting import db
 from models import Contact, Invoice, Payment, Policy
-from tools import PolicyAccounting
+from tools import PolicyAccounting, insert_data
 
 """
 #######################################################
@@ -14,6 +14,11 @@ Test Suite for PolicyAccounting
 #######################################################
 """
 
+try: 
+    invoices = Invoice.query.all()
+except:
+    db.create_all()
+    insert_data()
 class TestBillingSchedules(unittest.TestCase):
 
     @classmethod
