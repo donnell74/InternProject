@@ -27,10 +27,15 @@ class PolicyAccounting(object):
   
         policy_id -- Primary key of policies table
         """
-        self.policy = Policy.query.filter_by(id=policy_id).one()
-
-        if not self.policy.invoices:
-            self.make_invoices()
+        policy_query = Policy.query.filter_by(id=policy_id)
+        if policy_query.count() == 0:
+            #create new policy
+            print "Policy does not exist"
+            logger.log_error(1, policy_id)  
+        else:
+            self.policy = policy_query.one() 
+            if not self.policy.invoices:
+                self.make_invoices()
 
     def return_account_balance(self, date_cursor=None):
         """Return the current account balance based on invocies minus payments.
@@ -116,8 +121,8 @@ class PolicyAccounting(object):
         for invoice in self.policy.invoices:
             db.session.delete(invoice)
         
-        logger.log("Info", 
-                   "New invoices are being made, invoices for this policy will be have a different invoice_id",
+        logger.log("New invoices are being made, invoices for this policy will be have a different invoice_id",
+                   "Info",
                    self.policy.id);
 
         billing_schedules = {'Annual': None, 'Semi-Annual': 3, 'Quarterly': 4, 'Monthly': 12}
@@ -136,7 +141,9 @@ class PolicyAccounting(object):
         if billing_to_months.has_key(self.policy.billing_schedule):
             months_in_billing_period = billing_to_months.get(self.policy.billing_schedule)
         else:
-            Logger.log("Info", "Client tried using %s billing schedule", self.policy.id)
+            logger.log("Client tried using %s billing schedule", 
+                       "Info",
+                       self.policy.id)
             print "You have chosen a bad billing schedule."
 
         del billing_schedules["Annual"] # leave out annual from here to simplify

@@ -19,6 +19,8 @@ try:
 except:
     db.create_all()
     insert_data()
+
+
 class TestBillingSchedules(unittest.TestCase):
 
     @classmethod
