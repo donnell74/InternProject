@@ -69,6 +69,12 @@ class PolicyAccounting(object):
         date_cursor -- Date object (defaults to current date) 
         amount -- decimal number (default 0)
         """
+        contact = Contact.query.filter_by(id=contact_id).one()
+        if contact.role != "Agent" and self.evaluate_cancellation_pending_due_to_non_pay(date_cursor):
+            logger.log_error(2, self.policy.id)
+            print "Payment could not be made because account is in cancel pending, please contact your agent"
+            return False
+
         if not date_cursor:
             date_cursor = datetime.now().date()
 
@@ -91,7 +97,19 @@ class PolicyAccounting(object):
          being paid in full. However, it has not necessarily
          made it to the cancel_date yet.
         """
-        pass
+        if not date_cursor:
+            date_cursor = datetime.now().date()
+
+        invoices = Invoice.query.filter_by(policy_id=self.policy.id)\
+                                .filter(Invoice.due_date <= date_cursor)\
+                                .order_by(Invoice.due_date)\
+                                .all()
+
+        for invoice in invoices:
+            if self.return_account_balance(invoice.due_date):
+                return True
+
+        return False
 
     def evaluate_cancel(self, date_cursor=None):
         """Prints out if a policy should be canceled.

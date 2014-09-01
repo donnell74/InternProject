@@ -10,7 +10,8 @@ class Logger(object):
     """Logger class handles all writing to log files."""
     error_msgs = {
                    0: "A problem has occurred.",
-                   1: "Policy Accounting was given an unknown policy_id"
+                   1: "Policy Accounting was given an unknown policy_id",
+                   2: "Payment attempt made on a policy in cancel pending"
                  } 
 
     _instance = None
