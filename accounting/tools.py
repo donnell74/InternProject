@@ -184,6 +184,11 @@ class PolicyAccounting(object):
             db.session.add(invoice)
 
         db.session.commit()
+        self.policy.invoices = invoices
+
+    def change_billing_schedule(self, new_billing_schedule):
+        #for each_invoice in self.policy.invoices: 
+        #    print each_invoice
 
 ################################
 # The functions below are for the db and 
