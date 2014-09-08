@@ -106,13 +106,13 @@ class PolicyAccounting(object):
                                 .all()
 
         for invoice in invoices:
-            if self.return_account_balance(invoice.due_date):
+            if self.return_account_balance(invoice.due_date) > 0:
                 return True
 
         return False
 
     def evaluate_cancel(self, date_cursor=None):
-        """Prints out if a policy should be canceled.
+        """Returns true if a policy should be canceled.
 
         date_cursor -- Date object (defaults to current date)
         """
@@ -128,10 +128,11 @@ class PolicyAccounting(object):
             if not self.return_account_balance(invoice.cancel_date):
                 continue
             else:
-                print "THIS POLICY SHOULD HAVE CANCELED"
-                break
-        else:
-            print "THIS POLICY SHOULD NOT CANCEL"
+                self.policy.status = "Canceled"
+                self.policy.effective_date = invoice.cancel_date
+                db.session.commit()
+                return True
+        return False
 
 
     def make_invoices(self, end_date_cursor = None):
@@ -175,12 +176,10 @@ class PolicyAccounting(object):
 
         del billing_schedules["Annual"] # leave out annual from here to simplify
         if self.policy.billing_schedule in billing_schedules.keys(): 
-            print self.policy.billing_schedule, " ",
             # find amount of months between end_date_cursor and self.policy.effective_date
             months_left = (end_date_cursor - self.policy.effective_date).days / 30
 
             invoices_needed = int(months_left / billing_to_months.get(self.policy.billing_schedule))
-            print billing_schedules.get(self.policy.billing_schedule)
             first_invoice.amount_due = first_invoice.amount_due / invoices_needed
             
             # create the correct amount of invoices based on variables above

@@ -206,7 +206,7 @@ class TestEvaluateCancellations(unittest.TestCase):
         # now test the function 
         self.assertFalse(pa.evaluate_cancellation_pending_due_to_non_pay(date_cursor = date(2015, 3, 13)))
         self.assertFalse(pa.evaluate_cancellation_pending_due_to_non_pay(date_cursor = date(2015, 5, 15)))
-        self.assertTrue(pa.evaluate_cancellation_pending_due_to_non_pay(date_cursor = date(2015, 6, 13)))
+        self.assertTrue(pa.evaluate_cancellation_pending_due_to_non_pay(date_cursor = date(2015, 9, 13)))
 
     def test_make_payment_in_cancel_pending(self):
         self.policy.billing_schedule = "Quarterly"
@@ -220,3 +220,10 @@ class TestEvaluateCancellations(unittest.TestCase):
                                          date_cursor=invoices[0].due_date, amount=400))
         self.assertEquals(len(self.payments), 1)
 
+    def test_evaluate_cancel(self):
+        self.policy.billing_schedule = "Monthly"
+        pa = PolicyAccounting(self.policy.id)
+        self.assertFalse(pa.evaluate_cancel(pa.policy.effective_date))
+        self.assertEquals(Policy.query.filter_by(id=self.policy.id).one().status, "Active")
+        self.assertTrue(pa.evaluate_cancel(pa.policy.invoices[-1].due_date))
+        self.assertEquals(Policy.query.filter_by(id=self.policy.id).one().status, "Canceled")
