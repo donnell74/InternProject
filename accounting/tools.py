@@ -134,10 +134,20 @@ class PolicyAccounting(object):
             print "THIS POLICY SHOULD NOT CANCEL"
 
 
-    def make_invoices(self):
+    def make_invoices(self, end_date_cursor = None):
         """Produces next year's worth of invoices."""
+        invoices = []
+        if not end_date_cursor:
+            if self.policy:
+                end_date_cursor = self.policy.effective_date + relativedelta(days=365)
+            else:
+                end_date_cursor = datetime.now().date + relativedelta(days=365)
+
         for invoice in self.policy.invoices:
-            db.session.delete(invoice)
+            if not invoice.deleted:
+                db.session.delete(invoice)
+            else:
+                invoices.append(invoice)
         
         logger.log("New invoices are being made, invoices for this policy will be have a different invoice_id",
                    "Info",
@@ -147,7 +157,6 @@ class PolicyAccounting(object):
         billing_to_months = {'Annual': 12, 'Two-Pay': 6, 'Quarterly': 3, 'Monthly': 1}
 
         # create the first invoice
-        invoices = []
         first_invoice = Invoice(self.policy.id,
                                 self.policy.effective_date, #bill_date
                                 self.policy.effective_date + relativedelta(months=1), #due
@@ -159,14 +168,19 @@ class PolicyAccounting(object):
         if billing_to_months.has_key(self.policy.billing_schedule):
             months_in_billing_period = billing_to_months.get(self.policy.billing_schedule)
         else:
-            logger.log("Client tried using %s billing schedule", 
+            logger.log("Client tried using %s billing schedule" % (self.policy.billing_schedule), 
                        "Info",
                        self.policy.id)
             print "You have chosen a bad billing schedule."
 
         del billing_schedules["Annual"] # leave out annual from here to simplify
         if self.policy.billing_schedule in billing_schedules.keys(): 
-            invoices_needed = billing_schedules.get(self.policy.billing_schedule)
+            print self.policy.billing_schedule, " ",
+            # find amount of months between end_date_cursor and self.policy.effective_date
+            months_left = (end_date_cursor - self.policy.effective_date).days / 30
+
+            invoices_needed = int(months_left / billing_to_months.get(self.policy.billing_schedule))
+            print billing_schedules.get(self.policy.billing_schedule)
             first_invoice.amount_due = first_invoice.amount_due / invoices_needed
             
             # create the correct amount of invoices based on variables above
@@ -186,9 +200,40 @@ class PolicyAccounting(object):
         db.session.commit()
         self.policy.invoices = invoices
 
-    def change_billing_schedule(self, new_billing_schedule):
-        #for each_invoice in self.policy.invoices: 
-        #    print each_invoice
+    def change_billing_schedule(self, new_billing_schedule, date_cursor=None):
+        """Changes the billing schedule of the current policy"""
+        billing_schedules = {'Annual': None, 'Two-Pay': 2, 'Semi-Annual': 3, 'Quarterly': 4, 'Monthly': 12}
+        if self.policy.billing_schedule not in billing_schedules.keys(): 
+            logger.log("Client tried using %s billing schedule" % (self.policy.billing_schedule), 
+                       "Info",
+                       self.policy.id)
+            print "You have chosen a bad billing schedule."
+            return
+            
+        if not date_cursor:
+            date_cursor = datetime.now().date()
+
+        new_balance = self.return_account_balance(self.policy.effective_date + relativedelta(days=365))
+
+        # delete all old invoices
+        for each_invoice in self.policy.invoices: 
+            if self.return_account_balance(each_invoice.due_date) == 0:
+                each_invoice.deleted = True
+            else:
+                db.session.delete(each_invoice)
+
+        # change billing schedule and effective date of policy
+        self.policy.billing_schedule = new_billing_schedule
+        old_effective_date = self.policy.effective_date
+        self.policy.effective_date = date_cursor
+        self.policy.annual_premium = new_balance
+        
+        # call make_invoices to create new invoices
+        self.make_invoices(self.policy.effective_date + relativedelta(days=365))
+
+        db.session.commit()
+
+      
 
 ################################
 # The functions below are for the db and 
