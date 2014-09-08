@@ -116,6 +116,7 @@ class PolicyAccounting(object):
 
         date_cursor -- Date object (defaults to current date)
         """
+        self.policy.status = "Active"
         if not date_cursor:
             date_cursor = datetime.now().date()
 
@@ -132,6 +133,8 @@ class PolicyAccounting(object):
                 self.policy.effective_date = invoice.cancel_date
                 db.session.commit()
                 return True
+
+        db.session.commit()
         return False
 
 

@@ -1,0 +1,15 @@
+h1
+{
+  font-size: 20px;
+}
+
+li
+{
+  list-style-type: none;
+}
+
+table
+{
+  text-align: left;
+  width: 100%;
+}

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Accounting Policy</title>
+  <meta name="description" content="Accounting policy page for IWS Intern Project">
+  <meta name="author" content="Greg Donnell">
+  <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <!--[if lt IE 9]>
+<script src="http://html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+</head>
+<body>
+    <h1>Policy Information</h1>
+    <ul>
+      <li>Name: {{policy.policy_number}}</li>
+      <li>Effective Date: {{policy.effective_date}}</li>
+      <li>Status: {{policy.status}}</li>
+      <li>Billing Schedule: {{policy.billing_schedule}}</li>
+      <li>Annual Premium: {{policy.annual_premium}}</li>
+      <li>Name Insured: {{policy.named_insured}}</li>
+      <li>Agent: {{policy.agent}}</li>
+      <li>Amount Due At Current Date: {{policy.amount_due}}</li>
+    </ul>
+    
+    <h1>Invoices</h1>
+    <table>
+      <tr>
+        <th>Bill Date</th>
+        <th>Due Date</th>
+        <th>Cancel Date</th>
+        <th>Amount Due</th>
+        <th>Deleted</th>
+      </tr>
+    {% for each_invoice in policy.invoices %}
+      <tr>
+        <td>{{ each_invoice.bill_date }}</td> 
+        <td>{{ each_invoice.due_date }}</td>
+        <td>{{ each_invoice.cancel_date }}</td>
+        <td>{{ each_invoice.amount_due }}</td>
+        <td>{{ each_invoice.deleted }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+
+    <h1>Payment</h1>
+    <table>
+      <tr>
+        <th>Contact</th>
+        <th>Amount Paid</th>
+        <th>Transaction Date</th>
+      </tr>
+    {% for each_payment in policy.payments %}
+      <tr>
+        <td>{{ each_payment.contact }}</td> 
+        <td>{{ each_payment.amount_paid }}</td>
+        <td>{{ each_payment.transaction_date }}</td>
+      </tr>
+    {% endfor %}
+    </table>
+</body>
+</html>
